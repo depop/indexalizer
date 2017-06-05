@@ -24,12 +24,15 @@ DB.prototype.indexStats = function() {
           var qIdx = findQuery(profileDoc.query);
           if(qIdx == -1) {
             var size = queries.push({query:profileDoc.query, count:1, index:""});
-            var explain = db[cName].find(queries[size-1].query).explain();
-            if(profileDoc.query && profileDoc.query["query"]) {
+            if(profileDoc.query["$query"]) {
               queries[size-1].sort = profileDoc.query['orderby'];
               if(queries[size-1].sort) {
-                explain = db[cName].find(queries[size-1].query.query).sort(queries[size-1].sort).explain();
+                var explain = db[cName].find(queries[size-1].query.query).sort(queries[size-1].sort).explain();
+              } else {
+                var explain = db[cName].find(queries[size-1].query.query).explain();
               }
+            } else {
+              var explain = db[cName].find(queries[size-1].query).explain();                        
             }
             queries[size-1].cursor = explain.cursor;
             queries[size-1].millis = explain.millis;
