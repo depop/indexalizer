@@ -8,8 +8,10 @@ function indexStats() {
             db.system.profile.find({ns: nsName}).batchSize(1000).forEach(function (profileDoc) {
                 try {
                     if (profileDoc.query["$query"]) {
+                        // printjson(profileDoc.query["$query"]);
                         var query = profileDoc.query["$query"];
                     } else {
+                        // printjson(profileDoc.query);
                         var query = profileDoc.query;
                     }
                     var explain = db[cName].find(query).explain()
@@ -26,15 +28,29 @@ function indexStats() {
     for (var cIdx in collections) {
         var cName = collections[cIdx];
         if (cName.indexOf("system") == -1) {
-            print("checking for unused indexes in: " + cName);
-            for (var iIdx in db[cName].getIndexes()) {
-                var iName = db[cName].getIndexes()[iIdx].name;
+            print("COLLECTION[" + cName + "]");
+            var collectionIndexes = db[cName].getIndexes();
+            var unused = []
+            var used = {}
+            var total = 0
+            for (var iIdx in collectionIndexes) {
+                var iName = collectionIndexes[iIdx].name;
                 if (iName.indexOf("system") == -1) {
                     if (!indexes[iName]) {
-                        print("this index is not being used: ");
-                        printjson(iName);
+                        unused.push(iName)
+                    } else {
+                        used[iName] = indexes[iName]
+                        total += indexes[iName]
                     }
                 }
+            }
+            print("  UNUSED INDEXES")
+            unused.forEach(function(un){
+                print("    " + un);
+            })
+            print("  USED INDEXES")
+            for(var inuse in used){
+                print("    " + inuse + ": " + Math.round(indexes[inuse]/total*100).toFixed(0) + "%")
             }
         }
     }
